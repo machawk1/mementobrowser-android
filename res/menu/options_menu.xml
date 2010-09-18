@@ -1,0 +1,26 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_off"
+          android:title="Return to Present" 
+          android:icon="@drawable/menu_return_to_present"
+          />         
+    <item android:id="@+id/menu_list"
+          android:title="List Mementos" 
+          android:icon="@drawable/menu_list_mementos"
+          />
+          
+    <item android:id="@+id/menu_settings"
+          android:title="Settings" 
+          android:icon="@drawable/menu_settings"
+          />
+   
+    <item android:id="@+id/menu_help"
+          android:title="Help" 
+          android:icon="@drawable/menu_help"
+          />
+   <!--
+    <item android:id="@+id/menu_about"
+          android:title="About" 
+          android:icon="@drawable/about"
+          />
+            -->
+</menu> 
