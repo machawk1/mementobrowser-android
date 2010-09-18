@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	
+	<Preference
+		android:title="Date &amp; time settings"
+		android:summary="time and date to appear"
+		android:key="dateAndTimeSettings" />
+                
+                <!-- 
+                <CheckBoxPreference
+                        android:title="Checkbox Preference"
+                        android:defaultValue="false"
+                        android:summary="This preference can be true or false"
+                        android:key="checkboxPref" />
+                        -->
+                        
+ 	<PreferenceCategory
+                android:title="Timegate settings">
+                
+		<ListPreference
+		        android:title="Default timegate"
+		        android:summary="Select a default timegate"
+		        android:key="defaultTimegate"
+		        android:defaultValue=""
+		        android:entries="@array/listTimegates"
+		        android:entryValues="@array/listTimegateValues" />
+	
+		<EditTextPreference
+		        android:name="addTimegate"
+		        android:summary="Add a new timegate"
+		        android:defaultValue=""
+		        android:title="Add timegate"
+		        android:key="addTimegate" />	              
+	        
+	    <ListPreference
+			android:title="Delete a timegate"
+			android:summary="Select a timegate to delete"
+			android:key="deleteTimegate" 
+			android:defaultValue=""
+		    android:entries="@array/listTimegates"
+		    android:entryValues="@array/listTimegateValues" />
+		    
+	</PreferenceCategory>
+		
+</PreferenceScreen>

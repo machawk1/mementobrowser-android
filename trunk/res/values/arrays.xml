@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="listTimegates">
+        <item>http://mementoproxy.lanl.gov/aggr/timegate/</item>
+        <item>http://foo.org/</item>
+    </string-array>
+    
+    <string-array name="listTimegateValues">
+        <item>http://mementoproxy.lanl.gov/aggr/timegate/</item>
+        <item>http://foo.org/</item>
+    </string-array>
+    
+</resources>

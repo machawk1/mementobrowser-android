@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, MementoBrowser!</string>
+    <string name="app_name">Memento Browser</string>
+    
+    <!-- User agent reported when doing http requests -->
+    <string name="user_agent">Mozilla/5.0 MementoBrowser/0.1 (+http://code.google.com/p/memento-browser/)</string>
+    
+    <!-- Page that displays Help info when Help is selected from the main menu -->
+    <string name="help_page">http://code.google.com/p/memento-browser/wiki/Help</string>
+    
+    <!-- Starting page -->
+    <string name="homepage">http://mementoweb.org/</string> 
+</resources>
