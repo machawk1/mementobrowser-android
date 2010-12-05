@@ -102,8 +102,7 @@ public class MementoBrowser extends Activity {
 	private TextView mDateChosenButton;
 	private TextView mDateDisplayedView;
     private SimpleDateTime mDateChosen;
-    private SimpleDateTime mDateDisplayed;
-    
+    private SimpleDateTime mDateDisplayed;    
     private SimpleDateTime mToday;
         
     private TimeBundle mTimeBundle;
@@ -182,6 +181,8 @@ public class MementoBrowser extends Activity {
 	              R.drawable.ia_favicon));
         mFavicons.put("webcite", BitmapFactory.decodeResource(getResources(), 
 	              R.drawable.webcite_favicon));
+        mFavicons.put("national-archives", BitmapFactory.decodeResource(getResources(), 
+	              R.drawable.national_archives_favicon));
         
         // Set the date and time format
         SimpleDateTime.mDateFormat = android.text.format.DateFormat.getDateFormat(getApplicationContext());
@@ -219,6 +220,9 @@ public class MementoBrowser extends Activity {
 	            	if (mToday.compareTo(mDateChosen) <= 0) {
 	            		Log.d(LOG_TAG, "Browsing to " + mOriginalUrl);
 	            		mWebview.loadUrl(mOriginalUrl);
+	            		
+	            		// Clear since we are visiting a different page in the present
+	            		mMementos.clear();
 	            	}
 	            	else {
 	            		makeMementoRequests();
@@ -697,10 +701,7 @@ public class MementoBrowser extends Activity {
 				
 				Log.d(LOG_TAG, "Sending browser to " + redirectUrl);
 				mWebview.loadUrl(redirectUrl);				
-								
-				// Change the Showing date to the memento's date
-				//mDateDisplayed.setDateRfc1123(newLink.getDateTime());
-	
+									
 				// We can't update the view directly since we're running
 				// in a thread, so use mUpdateResults to show a toast message
 				// if accessing a different date than what was requested.
@@ -745,7 +746,7 @@ public class MementoBrowser extends Activity {
 				//mErrorMessage = "Sorry, but there was an error in retreiving this Memento.";
 				
 				// The lanl proxy has it wrong.  It should return 404 when the URL is not
-				// present, so we'll just pretent this is a 404.
+				// present, so we'll just pretend this is a 404.
 				mErrorMessage = "Sorry, but there are no Mementos for this URL.";
 				
 				//Log.d(LOG_TAG, "BODY: " + EntityUtils.toString(response.getEntity());							
@@ -796,14 +797,14 @@ public class MementoBrowser extends Activity {
      * Example data:
      * 	 <http://mementoproxy.lanl.gov/aggr/timebundle/http://www.harding.edu/fmccown/>;rel="timebundle",
      * 	 <http://www.harding.edu/fmccown/>;rel="original",
-     * 	 <http://web.archive.org/web/20010724154504/www.harding.edu/fmccown/>;rel="first-memento";datetime="Tue, 24 Jul 2001 15:45:04 GMT",
+     * 	 <http://web.archive.org/web/20010724154504/www.harding.edu/fmccown/>;rel="first memento";datetime="Tue, 24 Jul 2001 15:45:04 GMT",
      * 	 <http://web.archive.org/web/20010910203350/www.harding.edu/fmccown/>;rel="memento";datetime="Mon, 10 Sep 2001 20:33:50 GMT",
      * 
      * Another example:
      *   <http://mementoproxy.lanl.gov/google/timebundle/http://www.digitalpreservation.gov/>;rel="timebundle",
      *   <http://www.digitalpreservation.gov/>;rel="original",
-     *   <http://mementoproxy.lanl.gov/google/timemap/link/http://www.digitalpreservation.gov/>;rel="timemap";type="text/csv",
-     *   <http://webcache.googleusercontent.com/search?q=cache:http://www.digitalpreservation.gov/>;rel="first-memento last-memento memento";datetime="Tue, 07 Sep 2010 11:54:29 GMT"
+     *   <http://mementoproxy.lanl.gov/google/timemap/link/http://www.digitalpreservation.gov/>;rel="timemap";type="application/link-format",
+     *   <http://webcache.googleusercontent.com/search?q=cache:http://www.digitalpreservation.gov/>;rel="first last memento";datetime="Tue, 07 Sep 2010 11:54:29 GMT"
      *   
      * @param links
      * @return The datetime of the last item marked rel="memento"
@@ -850,10 +851,10 @@ public class MementoBrowser extends Activity {
 					
 					// Change the Showing date to the memento's date
 					//if (link.mRel.equals("first-memento"))
-					if (r.equals("first-memento")) {
+					if (r.contains("first")) {
 						mFirstMemento = m;
 					}
-					if (r.equals("last-memento")) {
+					if (r.contains("last")) {
 						mLastMemento = m;
 					}
 					if (r.equals("memento")) {
@@ -880,9 +881,11 @@ public class MementoBrowser extends Activity {
 		synchronized (mMementos) {
 			mMementos = tempList;
 		}
-		
+				
 		if (date != null)
 			Log.d(LOG_TAG, "parseCsvLinks returning " + date.toString());
+		else
+			Log.d(LOG_TAG, "parseCsvLinks returning null");
 		
 		return date;
     }
@@ -999,8 +1002,15 @@ public class MementoBrowser extends Activity {
         	if (mToday.compareTo(mDateChosen) <= 0) {
         		view.loadUrl(url);
         		
+        		Log.d(LOG_TAG, "mOriginalUrl = " + mOriginalUrl); 
+        		
+        		//if (!mMementos.getAssociatedUrl().equals(url)) {
+        		//	Log.d(LOG_TAG, "(1) Clearing all Mementos for new URL " + url);
+        		//	mMementos.clear();
+        		//}
+        		
         		if (!mOriginalUrl.equals(url)) {
-        			Log.d(LOG_TAG, "Clearing all Mementos for new URL " + url);
+        			Log.d(LOG_TAG, "(2) Clearing all Mementos for new URL " + url);
         			mMementos.clear();
         		}
         			
@@ -1059,13 +1069,12 @@ public class MementoBrowser extends Activity {
         		Log.d(LOG_TAG, "No favicon - null");
         		
         		// Use our built-in favicons since this isn't working
-        		if (url.startsWith("http://webcitation.org")) {
-        			favicon = mFavicons.get("webcite");
-        			      
-        		}
-        		else if (url.startsWith("http://web.archive.org")) {
+        		if (url.startsWith("http://webcitation.org")) 
+        			favicon = mFavicons.get("webcite");      
+        		else if (url.startsWith("http://web.archive.org")) 
         			favicon = mFavicons.get("ia");
-        		}
+        		else if (url.startsWith("http://webarchive.nationalarchives")) 
+        			favicon = mFavicons.get("national-archives");
         		else
         			mLocation.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);  
         		
@@ -1186,7 +1195,9 @@ public class MementoBrowser extends Activity {
         		dates = mMementos.getAllDates();
         	else
         		dates = mMementos.getDatesForYear(mSelectedYear);
-        	        	
+        	
+        	Log.d(LOG_TAG, "Number of dates = " + dates.length);
+        	
         	int selected = -1;
         	
         	// Select the radio button for the current Memento if it's in the selected year.
@@ -1369,7 +1380,10 @@ public class MementoBrowser extends Activity {
 				Log.w(LOG_TAG, "Content-Type is [" + type.getValue() + "] but TimeMap type is [" +
 						mTimeMap.getType() + "] for " + url);
 			
-			if (mTimeMap.getType().equals("text/csv")) {
+			// Timemap MUST be "application/link-format", but leave csv for
+			// backwards-compatibility with earlier Memento implementations
+			if (mTimeMap.getType().equals("text/csv") ||
+				mTimeMap.getType().equals("application/link-format")) {
 				try {
 					String responseBody = EntityUtils.toString(response.getEntity());
 					parseCsvLinks(responseBody);
@@ -1486,11 +1500,11 @@ public class MementoBrowser extends Activity {
     	String links = 
     		"<http://mementoproxy.lanl.gov/aggr/timebundle/http://www.harding.edu/fmccown/>;rel=\"timebundle\"," +
     		"<http://www.harding.edu/fmccown/>;rel=\"original\",<http://mementoproxy.lanl.gov/aggr/timemap/link/http://www.harding.edu/fmccown/>;rel=\"timemap\";type=\"text/csv\"," +
-    		"<http://web.archive.org/web/20010724154504/www.harding.edu/fmccown/>;rel=\"first-memento prev-memento\";datetime=\"Tue, 24 Jul 2001 15:45:04 GMT\"," +
-    		"<http://web.archive.org/web/20071222090517/www.harding.edu/fmccown/>;rel=\"last-memento\";datetime=\"Sat, 22 Dec 2007 09:05:17 GMT\"," +
-    		"<http://web.archive.org/web/20020104194811/www.harding.edu/fmccown/>;rel=\"next-memento\";datetime=\"Fri, 04 Jan 2002 19:48:11 GMT\"," +
+    		"<http://web.archive.org/web/20010724154504/www.harding.edu/fmccown/>;rel=\"first prev memento\";datetime=\"Tue, 24 Jul 2001 15:45:04 GMT\"," +
+    		"<http://web.archive.org/web/20071222090517/www.harding.edu/fmccown/>;rel=\"last memento\";datetime=\"Sat, 22 Dec 2007 09:05:17 GMT\"," +
+    		"<http://web.archive.org/web/20020104194811/www.harding.edu/fmccown/>;rel=\"next memento\";datetime=\"Fri, 04 Jan 2002 19:48:11 GMT\"," +
     		"<http://web.archive.org/web/20010910203350/www.harding.edu/fmccown/>;rel=\"memento\";datetime=\"Mon, 10 Sep 2001 20:33:50 GMT\"," + 
-    		"<http://webcache.googleusercontent.com/search?q=cache:http://www.digitalpreservation.gov/>;rel=\"first-memento last-memento memento\";datetime=\"Tue, 07 Sep 2010 11:54:29 GMT\"";
+    		"<http://webcache.googleusercontent.com/search?q=cache:http://www.digitalpreservation.gov/>;rel=\"first last memento\";datetime=\"Tue, 07 Sep 2010 11:54:29 GMT\"";
     	
     	parseCsvLinks(links);
     	mMementos.displayAll();
