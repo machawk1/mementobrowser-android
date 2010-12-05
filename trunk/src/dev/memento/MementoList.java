@@ -15,6 +15,7 @@ public class MementoList extends ArrayList<Memento> {
 	
 	private SortedSet <String> mYearList;
 	
+	// The currently selected memento
 	private int mCurrent = -1;
 	
 	public MementoList() {

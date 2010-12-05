@@ -11,8 +11,7 @@ public class Link {
 	private String mType;
 	private SimpleDateTime mDatetime;
 	
-	
-	
+		
 	/*
 	 *  Parse the text provided which comes from the http response
 	 *  Examples:
@@ -23,10 +22,7 @@ public class Link {
 	 *  <http://web.archive.org/web/20010910203350/www.harding.edu/fmccown/>;rel="memento";datetime="Mon, 10 Sep 2001 20:33:50 GMT",
 	 *  <http://webcache.googleusercontent.com/search?q=cache:http://www.digitalpreservation.gov/>;rel="first-memento last-memento memento";datetime="Tue, 07 Sep 2010 11:54:29 GMT"
 	 *  
-	 *  TODO: Is it possible that rel and datetime are in reverse order?
-	 *  
-	 */
-	
+	 */	
 	public Link(String link) {
 				
 		// Grab URL
@@ -41,7 +37,7 @@ public class Link {
 		// Remove URL part so we can grab the remaining parts
 		link = link.substring(index + 2);
 		
-		String[] parts = link.split(";");
+		String[] parts = link.split("\\s*;\\s*");
 		if (parts.length == 0) {
 			Log.e(LOG_TAG, "Unexpected format: [" + link + "]");
 			return;
@@ -85,14 +81,15 @@ public class Link {
 		
 		if (rel.contains("timebundle")) 
 			mRel = "timebundle";
-		else if (rel.contains("timemap")) {
+		else if (rel.contains("timemap")) 
 			mRel = "timemap";
-		}
+		else if (rel.contains("timegate")) 
+			mRel = "timegate";
 		else if (rel.contains("original"))
 			mRel = "original";
 		else if (rel.contains("memento")) {		
-			// Could contain first-memento, last-memento, prev-memento, next-memento, or memento
-			// or any combination of these
+			// Could contain "first memento", "last memento", "prev memento", "next memento", 
+			// or "memento" or any combination of these like "first last memento"
 			mRel = rel;
 		}
 		else {
