@@ -1,7 +1,20 @@
 /**
  * MementoBrowser.java
  * 
- *  Programmed by Frank McCown at Harding University, 2010.
+ * Copyright 2010 Frank McCown
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  *  
  *  This is the Memento Browser activity which houses a customized web browser for
  *  performing http queries using Memento.
@@ -19,9 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,9 +68,12 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.View.OnFocusChangeListener;
 import android.view.View.OnKeyListener;
+import android.view.View.OnTouchListener;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
@@ -88,14 +102,10 @@ public class MementoBrowser extends Activity {
 	private WebView mWebview;
 	
 	private TextView mLocation;
-	private Button mGo;
 	
 	private Button mNextButton;
 	private Button mPreviousButton;
-	
-	// To fix a bug described here: http://www.zunisoft.com/?p=1140 
-	private DateFormat longDateFormat = new SimpleDateFormat("EEEE, MMMM d, yyyy");
-	
+			
 	// For showing the page loading progress
 	private ProgressBar mProgressBar;
 	
@@ -127,6 +137,11 @@ public class MementoBrowser extends Activity {
     
     // The original URL that we are visiting
     private String mOriginalUrl;
+    
+    // The URL currently displayed in the browser
+    private String mCurrentUrl;
+    
+    private String mPageTitle;
     
    // private String mRedirectUrl;
     
@@ -168,10 +183,48 @@ public class MementoBrowser extends Activity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         
-        setContentView(R.layout.main);             
-        
+        setContentView(R.layout.main);            
+               
         mUserAgent = getApplicationContext().getText(R.string.user_agent).toString();
-        mOriginalUrl = getApplicationContext().getText(R.string.homepage).toString();
+        
+        // Set the date and time format
+        SimpleDateTime.mDateFormat = android.text.format.DateFormat.getDateFormat(getApplicationContext());
+        SimpleDateTime.mTimeFormat = android.text.format.DateFormat.getTimeFormat(getApplicationContext());        
+
+        
+        mDateChosenButton = (Button) findViewById(R.id.dateChosen);
+        mDateDisplayedView = (TextView) findViewById(R.id.dateDisplayed);
+
+        
+        // Launch the DatePicker dialog box
+        mDateChosenButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {            	                
+                showDialog(DIALOG_DATE);                	
+            }
+        });
+        
+        // Set the current date
+        mToday = new SimpleDateTime();   
+        
+        // Handle change in orientation gracefully
+        if (savedInstanceState == null) {
+        	mCurrentUrl = getApplicationContext().getText(R.string.homepage).toString();
+        	mOriginalUrl = mCurrentUrl;
+        	        	     
+            setChosenDate(mToday);       
+            setDisplayedDate(mToday);
+            
+            mMementos = new MementoList();
+        }
+        else {
+        	mCurrentUrl = savedInstanceState.getString("mCurrentUrl");        	
+        	mDateChosen = (SimpleDateTime) savedInstanceState.getSerializable("mDateChosen");
+        	mDateDisplayed = (SimpleDateTime) savedInstanceState.getSerializable("mDateDisplayed");
+        	
+        	setChosenDate(mDateChosen);       
+            setDisplayedDate(mDateDisplayed);            
+        }
+    	
         
         mTimegateUris = getResources().getStringArray(R.array.listTimegates);
         
@@ -184,37 +237,34 @@ public class MementoBrowser extends Activity {
         mFavicons.put("national-archives", BitmapFactory.decodeResource(getResources(), 
 	              R.drawable.national_archives_favicon));
         
-        // Set the date and time format
-        SimpleDateTime.mDateFormat = android.text.format.DateFormat.getDateFormat(getApplicationContext());
-        SimpleDateTime.mTimeFormat = android.text.format.DateFormat.getTimeFormat(getApplicationContext());        
-        
+               
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
         mProgressBar.setVisibility(View.GONE);
-        
-        mMementos = new MementoList();
-                        
+                                       
         mLocation = (TextView) findViewById(R.id.locationEditText);
-        mLocation.setSelectAllOnFocus(true);
-        /*mLocation.setOnTouchListener(new OnTouchListener() {
-
+        mLocation.setSelectAllOnFocus(true);   
+        
+        mLocation.setOnFocusChangeListener(new OnFocusChangeListener() {
 			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				// Select all text
-				//mLocation.
-				return false;
+			public void onFocusChange(View v, boolean hasFocus) {
+				// Replace title with URL when focus is lost
+				if (hasFocus) 
+					mLocation.setText(mCurrentUrl);
+				else if (mPageTitle.length() > 0)
+					mLocation.setText(mPageTitle);
 			}        	
-        });*/
+        });
         
         mLocation.setOnKeyListener(new OnKeyListener() {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				//Log.d(LOG_TAG, "keyCode = " + keyCode + "   event = " + event.getAction());
-				
+								
+				// Go to URL if user presses Go button
 				if (event.getAction() == KeyEvent.ACTION_DOWN &&
 						keyCode == KeyEvent.KEYCODE_ENTER) {
-										
-					mOriginalUrl = mLocation.getText().toString();
-					mOriginalUrl = fixUrl(mOriginalUrl);
+									
+					mOriginalUrl = fixUrl(mLocation.getText().toString());
 					
 					// Access live version if date is today or in the future
 	            	if (mToday.compareTo(mDateChosen) <= 0) {
@@ -224,9 +274,8 @@ public class MementoBrowser extends Activity {
 	            		// Clear since we are visiting a different page in the present
 	            		mMementos.clear();
 	            	}
-	            	else {
-	            		makeMementoRequests();
-	            	}
+	            	else 
+	            		makeMementoRequests();	            	
 	            	
 	            	// Hide the virtual keyboard
 	            	((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))  
@@ -254,29 +303,7 @@ public class MementoBrowser extends Activity {
 			//imgView.setImageDrawable(image);
 	        mLocation.setCompoundDrawablesWithIntrinsicBounds(image, null, null, null);
         }
-		*/
-        
-        mGo = (Button) findViewById(R.id.goButton);
-        mGo.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-            	mOriginalUrl = mLocation.getText().toString();
-            	mOriginalUrl = fixUrl(mOriginalUrl);
-            	
-            	// Access live version if date is today or in the future
-            	if (mToday.compareTo(mDateChosen) <= 0) {
-            		Log.d(LOG_TAG, "Browsing to " + mOriginalUrl);
-            		mWebview.loadUrl(mOriginalUrl);
-            		
-            		// Hide the virtual keyboard
-	            	((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))  
-	                	.hideSoftInputFromWindow(mLocation.getWindowToken(), 0); 
-            	}
-            	else {
-            		makeMementoRequests();
-            	}
-            }
-        });
-                
+		*/                       
         
         mNextButton = (Button) findViewById(R.id.next);
         mNextButton.setEnabled(false);
@@ -366,49 +393,37 @@ public class MementoBrowser extends Activity {
             	}
             }
         }); 
-
-        mDateChosenButton = (Button) findViewById(R.id.dateChosen);
-        mDateDisplayedView = (TextView) findViewById(R.id.dateDisplayed);
-
-        // add a click listener to the button
-        mDateChosenButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-            	Date date = new Date();
-            	DateFormat dateFormat = DateFormat.getDateTimeInstance();
-            	TimeZone tz = dateFormat.getTimeZone();
-                System.out.println("Time: " + dateFormat.format(date));
-                System.out.println("Time zone: " + tz.getDisplayName());
-                
-                DateFormat df = android.text.format.DateFormat.getDateFormat(getApplicationContext());
-                System.out.println("Time2: " + df.format(date));
-                
-                showDialog(DIALOG_DATE);
-                
-                // Launches date & time settings               
-                //startActivity(new Intent(android.provider.Settings.ACTION_DATE_SETTINGS));
-                
-                // Problems:
-                // 1) We don't want the user to have to modify system settings
-                // 2) Not all options are really needed
-                
-                // Solution: Build our own that is similar
-                // But this is a real pain!!
-                	
-            }
-        });
-
-        // Set the current date
-        mToday = new SimpleDateTime();        
-        setChosenDate(mToday);       
-        setDisplayedDate(mToday);
+               
         
         mWebview = (WebView) findViewById(R.id.webview);
         mWebview.setWebViewClient(new MementoWebViewClient()); 
         mWebview.setWebChromeClient(new MementoWebChromClient());
         mWebview.getSettings().setJavaScriptEnabled(true);
-        mWebview.loadUrl(mOriginalUrl);        
+        mWebview.loadUrl(mCurrentUrl);        
         
-       
+        mWebview.setOnTouchListener(new OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {		
+				
+				// Set focus here so focus is removed from the location text field
+				// which will change the URL into the page's title.
+				// There really should be a better way to do this, but it's a general
+				// problem that other developers have ran into as well:
+				// http://groups.google.com/group/android-developers/browse_thread/thread/9d1681a01f05e782?pli=1
+				
+				if (mLocation.hasFocus()) {
+					mWebview.requestFocus();
+					return true;
+				}
+				
+				// Hide the virtual keyboard
+            	((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))  
+                	.hideSoftInputFromWindow(mLocation.getWindowToken(), 0);  
+				
+				return false;
+			}        	
+        });
+        
         //testMementos();
     }
     
@@ -423,6 +438,41 @@ public class MementoBrowser extends Activity {
         Log.d(LOG_TAG, "mDefaultTimegateUri = " + mDefaultTimegateUri);
     }
     
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {		
+    	super.onSaveInstanceState(outState);
+    	Log.d(LOG_TAG, "-- onSaveInstanceState");
+    		
+    	outState.putSerializable("mDateChosen", mDateChosen);
+    	outState.putSerializable("mDateDisplayed", mDateDisplayed);
+    	outState.putString("mCurrentUrl", mCurrentUrl);
+    	outState.putString("mOriginalUrl", mOriginalUrl);
+    	outState.putString("mPageTitle", mPageTitle);
+    	Log.d(LOG_TAG, "** Num of mementos: " + mMementos.size());    	
+    	outState.putSerializable("mMementos", mMementos);
+    }
+
+    
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    	super.onRestoreInstanceState(savedInstanceState);
+    	Log.d(LOG_TAG, "-- onRestoreInstanceState");
+    	    	
+    	mOriginalUrl = savedInstanceState.getString("mOriginalUrl");
+    	mPageTitle = savedInstanceState.getString("mPageTitle");
+    	mMementos = (MementoList) savedInstanceState.getSerializable("mMementos");
+    	Log.d(LOG_TAG, "** Num of mementos: " + mMementos.size());    	
+    	
+    	if (mMementos != null) {
+    		mFirstMemento = mMementos.getFirst();
+    		mLastMemento = mMementos.getLast();    		
+    	}
+    	
+    	// Only enable buttons if viewing Mementos
+    	if (!mToday.equalsDate(mDateChosen))
+    		setEnableForNextPrevButtons();
+    }
+
     @Override 
     public boolean onCreateOptionsMenu(Menu menu) { 
          super.onCreateOptionsMenu(menu);         	    
@@ -446,27 +496,39 @@ public class MementoBrowser extends Activity {
         return true;
     }
     
+    private void returnToPresent() {
+    	
+    	mToday = new SimpleDateTime();
+    	setChosenDate(mToday);
+    	setDisplayedDate(mToday);
+    	showToast("Returning to the present.");
+    	mNextButton.setEnabled(false);
+    	mPreviousButton.setEnabled(false);
+    	
+    	// It's possible if the user was going back a page to 
+		// be viewing an archived page.  This is just a hack for IA pages,
+		// so a more comprehensive solution should be implemented.
+		if (mOriginalUrl.startsWith("http://web.archive.org/"))
+			mOriginalUrl = convertIaUrlBack(mOriginalUrl);
+		
+    	mWebview.loadUrl(mOriginalUrl);			
+    	mMementos.setCurrentIndex(-1);
+    }
+    
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.menu_off:
-        	// First make sure mToday is accurate
-        	mToday = new SimpleDateTime();
-        	
-        	// Go back to today
-        	setChosenDate(mToday);
-        	setDisplayedDate(mToday);
-        	showToast("Returning to the present.");
-        	mNextButton.setEnabled(false);
-        	mPreviousButton.setEnabled(false);
-        	mWebview.loadUrl(mOriginalUrl);					
-        	
+        	// Turn off Memento and return to the present        	
+        	returnToPresent();        	
             return true;
+            
         case R.id.menu_settings:
         	         						
 			startActivityForResult(new Intent(this, Settings.class), 0);
 			
             return true;
+            
         case R.id.menu_list:
         	
         	// We don't want to overwhelm the user with too many choices
@@ -476,6 +538,7 @@ public class MementoBrowser extends Activity {
         		showDialog(DIALOG_MEMENTO_DATES);
         	
             return true;
+            
         case R.id.menu_help:        	
         	// Open a browser to the project's Help page
         	String url = getApplicationContext().getText(R.string.help_page).toString();
@@ -484,6 +547,7 @@ public class MementoBrowser extends Activity {
 			
         	return true;
         }
+        
         return false;
     }
     
@@ -569,15 +633,15 @@ public class MementoBrowser extends Activity {
      */
     protected void makeMementoRequests() {
 
-    	// Ideally we should show this, but it's hard to synchronize with the
-    	// browser which is downloading pages.
+    	// Ideally we should show some type of progress bar, but probably not the browsers'
+    	// which is downloading pages.
     	//mProgressBar.setVisibility(View.VISIBLE);
     	
         // Fire off a thread to do some work that we shouldn't do directly in the UI thread
         Thread t = new Thread() {
             public void run() {
             	            	
-            	makeHttpRequests();
+            	makeHttpRequests(mOriginalUrl);
             	
             	// Enable or disable Next and Previous buttons
             	mHandler.post(mUpdateNextPrev);           	
@@ -611,7 +675,7 @@ public class MementoBrowser extends Activity {
      * Make http requests using the Memento protocol to obtain a Memento or list
      * of Mementos. 
      */
-    private void makeHttpRequests() {
+    private void makeHttpRequests(String initUrl) {
     	
     	// Contact Memento proxy with chosen Accept-Datetime:
     	// http://mementoproxy.lanl.gov/aggr/timegate/http://example.com/
@@ -622,7 +686,7 @@ public class MementoBrowser extends Activity {
     	// Disable automatic redirect handling so we can process the 302 ourself 
     	httpclient.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
  
-    	String url = mDefaultTimegateUri + mOriginalUrl;
+    	String url = mDefaultTimegateUri + initUrl;
         HttpGet httpget = new HttpGet(url);
         
         // Change the request date to 23:00:00 if this is the first memento.
@@ -876,7 +940,7 @@ public class MementoBrowser extends Activity {
     	//Log.d(LOG_TAG, "Starting sort...");
 		//Collections.sort(tempList);
     	
-		Log.d(LOG_TAG, "Finished parsing links");
+		Log.d(LOG_TAG, "Finished parsing, found " + tempList.size() + " links");
 		
 		synchronized (mMementos) {
 			mMementos = tempList;
@@ -894,33 +958,29 @@ public class MementoBrowser extends Activity {
      * Callback when the user sets the date
      */
     private DatePickerDialog.OnDateSetListener mDateSetListener =
-            new DatePickerDialog.OnDateSetListener() {
+        new DatePickerDialog.OnDateSetListener() {
 
-                public void onDateSet(DatePicker view, int year, 
-                                      int monthOfYear, int dayOfMonth) {
-                	setChosenDate(dayOfMonth, monthOfYear + 1, year);
-                	                	
-                	if (mToday.equals(mDateChosen)) {
-                		showToast("Returning to the present.");
-                		setDisplayedDate(mDateChosen);
-                		mWebview.loadUrl(mOriginalUrl);
-                	}
-                	else if (mToday.compareTo(mDateChosen) < 0) {
-                		showToast("We can't see the future.\nHow about the present?");
-                		
-                		setDisplayedDate(mToday);
-                		mWebview.loadUrl(mOriginalUrl);
-                	}
-                	else {
-                		showToast("Time travelling to " + mDateChosen.dateFormatted());                	
-                		makeMementoRequests();
-                	}
-                }
-            };
+            public void onDateSet(DatePicker view, int year, 
+                                  int monthOfYear, int dayOfMonth) {
+            	setChosenDate(dayOfMonth, monthOfYear + 1, year);
+            	                	
+            	if (mToday.equalsDate(mDateChosen)) {            		
+            		returnToPresent();
+            	}
+            	else if (mToday.compareTo(mDateChosen) < 0) {
+            		showToast("We can't see the future.\nHow about the present?");            		
+            		returnToPresent();
+            	}
+            	else {
+            		showToast("Time travelling to " + mDateChosen.dateFormatted());                	
+            		makeMementoRequests();
+            	}
+            }
+        };
     
     /**
      * Display toast message.
-     * @param message To display
+     * @param message to display
      */
     private void showToast(String message) {
     	Toast.makeText(getBaseContext(), message, Toast.LENGTH_LONG).show();
@@ -961,7 +1021,7 @@ public class MementoBrowser extends Activity {
 			url = m.replaceFirst("");
 		}
 		
-		if (!url.startsWith("http://"))
+		if (!url.startsWith("http://") && !url.startsWith("https://"))
 			url = "http://" + url;
 		
 		return url;
@@ -978,6 +1038,19 @@ public class MementoBrowser extends Activity {
     	public void onReceivedIcon(WebView view, Bitmap icon) {
     		Log.d(LOG_TAG, "onReceivedIcon icon = " + icon.toString());
     	}
+    	
+    	@Override
+    	public void onReceivedTitle (WebView view, String title) {
+    		Log.d(LOG_TAG, "onReceivedTitle title = " + title);
+    		
+    		// Since we are replacing the URL with the page's title,
+    		// we should swap the URL back when the user tries to enter a new URL.    		
+    		if (title.length() > 0) 
+    			mLocation.setText(title);
+    			    		
+    		mPageTitle = title;
+    	}
+    	
     }
     
     /**
@@ -991,7 +1064,7 @@ public class MementoBrowser extends Activity {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
         	Log.d(LOG_TAG, "-- shouldOverrideUrlLoading");
-                	
+                    	
         	// Fix partial URLs
         	if (!url.startsWith("http://") && !url.startsWith("https://"))
         		url = "http://" + url;
@@ -1001,6 +1074,14 @@ public class MementoBrowser extends Activity {
         	// Only time travel if selected date is in the past!
         	if (mToday.compareTo(mDateChosen) <= 0) {
         		view.loadUrl(url);
+        	
+        		// It's possible if the user was going back a page to 
+        		// be viewing an archived page.  This is just a hack for IA pages,
+        		// so a more comprehensive solution should be implemented.
+        		if (url.startsWith("http://web.archive.org/"))
+        			url = convertIaUrlBack(url);
+        		
+        		mCurrentUrl = url;
         		
         		Log.d(LOG_TAG, "mOriginalUrl = " + mOriginalUrl); 
         		
@@ -1020,9 +1101,9 @@ public class MementoBrowser extends Activity {
         		// User has clicked on a URL in an archived page, so we need the original
         		// URL so we can find all its mementos
         		url = convertIaUrlBack(url);        	
-        	
-        		mOriginalUrl = url;
-        		Log.d(LOG_TAG, "mOriginalUrl = " + mOriginalUrl); 
+        		Log.d(LOG_TAG, "Converted IA URL = " + url); 
+        		
+        		mOriginalUrl = url;        		
         		makeMementoRequests();
         	}        	          
     		
@@ -1040,9 +1121,9 @@ public class MementoBrowser extends Activity {
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
         	Log.d(LOG_TAG, "-- onPageStarted");
         	
-        	mProgressBar.setVisibility(View.VISIBLE);
+        	mCurrentUrl = url;
 
-        	mLocation.setText(url);
+        	mProgressBar.setVisibility(View.VISIBLE);
         	
         	// Show date here because it can take a long time before it finishes downloading
         	Log.d(LOG_TAG, "mDateDisplayed: " + mDateDisplayed.dateFormatted());
@@ -1110,8 +1191,8 @@ public class MementoBrowser extends Activity {
         	//if (mLocation.isInEditMode()) {
         	if (mLocation.isSelected())
         		Log.d(LOG_TAG, "Editor is in edit mode, so don't erase text!");        	
-        	else
-        		mLocation.setText(url);
+        	//else
+        	//	mLocation.setText(url);
         	
         	Log.d(LOG_TAG, "-- onPageFinished... mDateDisplayed: " + mDateDisplayed.dateFormatted());
         	
@@ -1198,6 +1279,12 @@ public class MementoBrowser extends Activity {
         	
         	Log.d(LOG_TAG, "Number of dates = " + dates.length);
         	
+        	// This shouldn't happen, but just in case.
+        	if (dates.length == 0) {
+        		showToast("No Mementos to select from.");
+        		return null;
+        	}
+        	
         	int selected = -1;
         	
         	// Select the radio button for the current Memento if it's in the selected year.
@@ -1212,14 +1299,14 @@ public class MementoBrowser extends Activity {
         		Memento m = mMementos.getCurrent();
         		if (m != null) {
         			for (int i = 0; i < dates.length; i++) {
-        				if (m.getDateTime().dateAndTimeFormatted().equals(dates[i])) {	        				
-	        				selected = i;
+        				if (m.getDateTime().dateAndTimeFormatted().equals(dates[i])) {	
+        					selected = i;
 	        				break;
 	        			}
 	        		}
         		}
         		else
-        			Log.w(LOG_TAG, "Memento is null!");
+        			Log.d(LOG_TAG, "There is no current Memento");
         	}
         	
         	Log.d(LOG_TAG, "Selected index = " + selected);
@@ -1297,7 +1384,8 @@ public class MementoBrowser extends Activity {
         switch (id) {
         case DIALOG_DATE:        	
         	// To fix a bug described here: http://www.zunisoft.com/?p=1140 
-        	DatePickerDialog dlg = (DatePickerDialog) dialog;
+        	DatePickerDialog dlg = (DatePickerDialog) dialog;        
+        	DateFormat longDateFormat = new SimpleDateFormat("EEEE, MMMM d, yyyy");
         	dlg.setTitle(longDateFormat.format(mDateChosen.getDate()));        	
         	dlg.updateDate(mDateChosen.getYear(), mDateChosen.getMonth() - 1, 
         			mDateChosen.getDay());
@@ -1480,22 +1568,7 @@ public class MementoBrowser extends Activity {
     	m2.getDateTime().setToLastHour();
     	
     	System.out.println("New value for getDateTimeString: " + m2.getDateTimeString());
-    	
-    	SimpleDateTime d1 = m1.getDateTime();
-    	SimpleDateTime d2 = SimpleDateTime.parseShortDate("09-09-2001");
-    	System.out.println("Comparing " + d1.toString() + " with " + d2.toString());
-    	if (d1.equals(d2))
-    		System.out.println("Same date.");
-    	else
-    		System.out.println("Not equal dates.");
-
-    	d2 = SimpleDateTime.parseShortDate("9-10-2001");
-    	System.out.println("Comparing " + d1.toString() + " with " + d2.toString());
-    	if (d1.equals(d2))
-    		System.out.println("Same date.");
-    	else
-    		System.out.println("Not equal dates.");
-    	
+    	    	
     	    	
     	String links = 
     		"<http://mementoproxy.lanl.gov/aggr/timebundle/http://www.harding.edu/fmccown/>;rel=\"timebundle\"," +

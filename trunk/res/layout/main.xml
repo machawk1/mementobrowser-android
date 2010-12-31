@@ -30,21 +30,9 @@
         android:singleLine="true"
         android:drawableLeft="@drawable/loading_favicon"
         android:drawablePadding="5px"
+        android:imeOptions="actionGo"
         />
-    <Button
-        android:id="@+id/goButton"
-        android:layout_width="wrap_content"
-        android:layout_height="40px"
-        android:layout_marginLeft="5px"
-        android:text="Go" />
-        
-        <!--  
-    <ImageView android:id="@+id/imagetest"
-  android:src="@drawable/icon"
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content"    
-    /> -->
-    
+            
     </LinearLayout>
     
     <RelativeLayout
