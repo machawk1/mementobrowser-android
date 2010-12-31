@@ -1,5 +1,27 @@
+/**
+ * MementoList.java
+ * 
+ * Copyright 2010 Frank McCown
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  
+ *  This keeps a list of all the Mementos which are known for a given URL.
+ */
+
 package dev.memento;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -7,7 +29,7 @@ import java.util.TreeSet;
 import android.util.Log;
 
 
-public class MementoList extends ArrayList<Memento> {
+public class MementoList extends ArrayList<Memento> implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -85,20 +107,44 @@ public class MementoList extends ArrayList<Memento> {
 		return -1;
 	}
 	
+	/**
+	 * Set the current index to the given integer if the number is >= -1 
+	 * (for the case of "un-setting" the index up to the size-1.
+	 * @param index
+	 */
 	public void setCurrentIndex(int index) {
-		mCurrent = index;
+		if (index >= -1 && index < size())
+			mCurrent = index;
 	}
 	
+	/**
+	 * Return the index of the current Memento in the list (0 to size-1).
+	 * @return
+	 */
 	public int getCurrentIndex() {
 		return mCurrent;
 	}
 	
+	/**
+	 * Returns the first Memento in the list or null if there are no Mementos.
+	 * @return
+	 */
 	public Memento getFirst() {
-		return get(0);
+		if (this.size() > 0)
+			return get(0);
+		else
+			return null;
 	}
 	
-	public Memento getLast() {		
-		return get(size() - 1);
+	/**
+	 * Returns the last Memento in the list or null if there are no Mementos.
+	 * @return
+	 */
+	public Memento getLast() {	
+		if (this.size() > 0)
+			return get(size() - 1);
+		else
+			return null;
 	}
 		
 	/**

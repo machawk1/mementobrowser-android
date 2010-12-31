@@ -1,5 +1,27 @@
+/**
+ * SimpleDateTime.java
+ * 
+ * Copyright 2010 Frank McCown
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  
+ *  This implements a simple date/time class.
+ */
+
 package dev.memento;
 
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -9,8 +31,10 @@ import java.util.Locale;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
-public class SimpleDateTime implements Comparable<SimpleDateTime> {
+public class SimpleDateTime implements Comparable<SimpleDateTime>, Serializable {
 	
+	private static final long serialVersionUID = 1L;
+
 	// Sun, 06 Nov 1994 08:49:37 GMT
 	public final static String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
 	
@@ -180,7 +204,12 @@ public class SimpleDateTime implements Comparable<SimpleDateTime> {
     	//return new StringBuilder()
         //       .append(mMonth).append("-").append(mDay).append("-").append(mYear);
 		
-		//if (mDateFormat == null)
+		if (mDateFormat == null) {
+			System.out.println("!! mDateFormat is null - using default format !!");
+			
+			// Use default format
+			mDateFormat = DateFormat.getInstance();
+		}
 		//	mDateFormat = DateFormat.getDateInstance();
 		
 		return mDateFormat.format(mDate);
@@ -210,37 +239,6 @@ public class SimpleDateTime implements Comparable<SimpleDateTime> {
 			date = date.replace("+00:00", "");
 		
 		return date;
-		
-		/*
-		Date date = null;
-		SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy");
-		try {
-			date = (Date)formatter.parse(dateFormatted().toString());
-			formatter = new SimpleDateFormat(PATTERN_RFC1123, Locale.US);
-            formatter.setTimeZone(GMT);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}			
-		    		
-        return formatter.format(date);
-        */
-        
-        /*
-		String s = null;
-		try {
-	         DateFormat formatter ; 
-	         Date date ;    
-	         formatter = new SimpleDateFormat("E, dd MMMM yyyy hh:mm:ss");
-	         date = (Date)formatter.parse(dateFormatted().toString());    
-	         s = formatter.format(date);
-	         System.out.println("Today is " + s);    	         
-	    } 
-		catch (ParseException e)
-	    {
-	    	System.out.println("Exception :" + e);    
-	    } 
-		return s;
-		*/
 	}
 	
 	/**
@@ -264,28 +262,24 @@ public class SimpleDateTime implements Comparable<SimpleDateTime> {
 	 */
 	@Override
 	public int compareTo(SimpleDateTime date) {
-		//System.out.println("Comparing " + mDate.toString() + " to " + date.mDate);
-		//return mDate.compareTo(date.mDate);
-		
-		// Compare with our equals() which only compares dates, not times
-		if (date.equals(this))
+		// Compare with our equalsDate() which only compares dates, not times
+		if (date.equalsDate(this))
 			return 0;
 		else {
-			// Since the dates aren't thre same, we can use the regular compareTo()
+			// Since the dates aren't the same, we can use the regular compareTo()
 			// which does compare time info
 			return mDate.compareTo(date.mDate);
 		}
 	}
 	
 	/**
-	 * Return true if the dates are the same (ignore hours, minutes, seconds).
+	 * Return true if the time and dates are the same.
 	 */
 	@Override
 	public boolean equals(Object o) {		
 		if (o instanceof SimpleDateTime) {
 			SimpleDateTime d = (SimpleDateTime)o;
-			//if (d.mDay == mDay && d.mMonth == mMonth && d.mYear == mYear)
-			
+						
 			// Compare entire thing
 			if (d.longDateFormatted().equals(this.longDateFormatted()))
 				return true;
@@ -296,6 +290,9 @@ public class SimpleDateTime implements Comparable<SimpleDateTime> {
 			return super.equals(o);
 	}
 	
+	/**
+	 * Return true if the dates are the same (ignore hours, minutes, seconds).
+	 */
 	public boolean equalsDate(SimpleDateTime d) {
 		return (d.getDay() == mDay && d.getMonth() == mMonth && d.getYear() == mYear);
 	}

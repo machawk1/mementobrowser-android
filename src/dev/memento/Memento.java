@@ -1,6 +1,10 @@
 package dev.memento;
 
-public class Memento implements Comparable<Memento> {
+import java.io.Serializable;
+
+public class Memento implements Comparable<Memento>, Serializable{
+	
+	private static final long serialVersionUID = 1L;
 	
 	private String mUrl;
 	private String mRel;

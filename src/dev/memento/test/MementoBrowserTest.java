@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import dev.memento.*;
+//import dev.memento.*;
 
 public class MementoBrowserTest {
 
