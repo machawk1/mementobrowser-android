@@ -1,0 +1,109 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget54"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <ProgressBar
+                android:id="@+id/pageLoadProgressBar"
+                android:layout_width="35dp"
+                android:layout_height="35dp" />
+
+            <AutoCompleteTextView 
+                android:id="@+id/locationEditText"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@android:drawable/editbox_background"
+                android:drawableLeft="@drawable/loading_favicon"
+                android:drawablePadding="5dp"
+                android:hint="@string/url_hint"
+                android:imeOptions="actionGo"
+                android:inputType="textUri"
+                android:completionThreshold="1"
+                android:selectAllOnFocus="true"
+                android:singleLine="true" />
+        </LinearLayout>
+
+        <RelativeLayout
+	    	android:layout_width="fill_parent"
+	    	android:layout_height="40dp"
+            android:gravity="center" >
+
+            <Button
+                android:id="@+id/dateChosen"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_alignParentLeft="true"
+                android:onClick="showDatePicker"
+                android:text="@string/button_date"
+                />         
+
+            <!--  android:layout_marginLeft="10dp" -->
+            <ImageButton
+                android:id="@+id/previous"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="20dp"
+                android:layout_toRightOf="@+id/dateChosen" 
+                android:contentDescription="@string/button_previous"               
+                android:src="@drawable/previous_item" 
+                android:background="@android:color/transparent" />
+
+            <ProgressBar
+                android:id="@+id/loadMementosProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"                
+                style="@android:style/Widget.ProgressBar.Small"
+                android:gravity="center_vertical"
+                android:layout_centerInParent="true"
+                android:layout_toRightOf="@+id/previous" />
+
+            <TextView
+                android:id="@+id/dateDisplayed"
+                android:layout_width="95dp"
+                android:layout_height="fill_parent"
+                android:gravity="center"
+                android:layout_centerInParent="true"
+                android:layout_toRightOf="@+id/loadMementosProgressBar"
+                android:text="1-2-2010" />
+
+            <ImageButton
+                android:id="@+id/next"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent" 
+                android:layout_marginRight="20dp"
+                android:layout_toRightOf="@+id/dateDisplayed"
+                android:contentDescription="@string/button_next"               
+                android:src="@drawable/next_item"
+                android:background="@android:color/transparent" />
+
+            <!-- android:layout_alignParentRight="true" -->
+            <Button
+                android:id="@+id/nowButton"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_toRightOf="@+id/next"
+                android:onClick="nowButtonClick"
+                android:text="@string/button_now"
+                 />
+        </RelativeLayout>
+
+        <FrameLayout android:id="@+id/webViewPlaceholder"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent">
+            
+           
+        </FrameLayout>
+    </LinearLayout>
+
+</ScrollView>
