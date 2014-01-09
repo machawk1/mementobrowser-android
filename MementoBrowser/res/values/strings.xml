@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Memento Browser</string>
+    <string name="button_now">Now</string>
+    <string name="button_date">Date</string>
+    <string name="url_hint">Type a URL</string>
+    <string name="button_previous">Previous Memento</string>
+    <string name="button_next">Next Memento</string>
+    <string name="display_date">Displaying:</string>
+    
+    <!-- Menu items -->
+    <string name="menu_now">Return to Present</string>
+    <string name="menu_list">Choose Memento</string>
+    <string name="menu_refresh">Reload</string>
+    <string name="menu_details">Memento Details</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_help">Help</string>
+
+    <!-- Selector for dates -->
+    <string name="select_year">Select a year</string>
+    <string name="select_month">Select a month</string>
+    <string name="select_day">Select a date</string>
+
+    <!-- Buttons for date picker -->
+    <string name="button_cancel">Cancel</string>
+    <string name="button_set">Set</string>
+
+    <!-- User agent reported when doing http requests -->
+    <string name="user_agent">Mozilla/5.0 MementoBrowser/2.0 (+http://code.google.com/p/memento-browser/)</string>
+
+    <!-- Page that displays Help info when Help is selected from the main menu -->
+    <string name="help_page">http://code.google.com/p/memento-browser/wiki/Help</string>
+
+    <!-- Starting page -->
+    <string name="homepage">http://mementoweb.org/</string>
+    
+    <string name="action_settings">Settings</string>
+    
+    <!-- Detail activity -->
+    <string name="title_activity_memento_detail">Memento Details</string>
+	<string name="detail_original_url">Orignial URL</string>
+	<string name="detail_memento_url">Memento URL</string>
+	<string name="detail_memento_date">Memento Datetime</string>
+	<string name="detail_archive_source">Archive Source</string>
+</resources>

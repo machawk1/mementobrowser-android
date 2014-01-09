@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="listTimegates">
+        <item>http://mementoproxy.lanl.gov/aggr/timegate/</item>
+        <item>http://mementoproxy.cs.odu.edu/aggr/timegate/</item>
+    </string-array>
+    
+    <string-array name="listTimegateValues">
+        <item>http://mementoproxy.lanl.gov/aggr/timegate/</item>
+        <item>http://mementoproxy.cs.odu.edu/aggr/timegate/</item>
+    </string-array>
+    
+    <string-array name="defaultWebsites">
+        <item>www.facebook.com</item>
+        <item>www.google.com</item>
+        <item>www.youtube.com</item>
+        <item>www.yahoo.com</item>
+        <item>www.baidu.com</item>
+        <item>www.live.com</item>
+        <item>www.amazon.com</item>
+        <item>www.twitter.com</item>
+        <item>www.blogspot.com</item>
+        <item>www.linkedin.com</item>
+        <item>www.ebay.com</item>
+        <item>www.cnn.com</item>
+        <item>www.mementoweb.org</item>
+        <item>www.bing.com</item>
+        <item>www.tumblr.com</item>
+        <item>www.pinterest.com</item>
+        <item>www.apple.com</item>
+        <item>www.paypal.com</item>
+        <item>www.imdb.com</item>
+        <item>www.craigslist.org</item>
+        <item>www.ask.com</item>
+        <item>www.flickr.com</item>
+        <item>www.wikipedia.org</item>
+        <item>www.whitehouse.gov</item>
+    </string-array>
+    
+</resources>
